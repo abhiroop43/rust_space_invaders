@@ -9,6 +9,7 @@ use std::error::Error;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 use std::{io, thread};
+use space_invaders::invaders::Invaders;
 use space_invaders::player::Player;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -49,6 +50,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     // game loop
     let mut player = Player::new();
     let mut instant = Instant::now();
+    let mut invaders = Invaders::new();
+
     'gameLoop: loop {
         // per frame initialization
         let delta = instant.elapsed();
@@ -77,9 +80,17 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // updates
         player.update(delta);
+        if invaders.update(delta) {
+            audio.play("move");
+        }
 
         // draw and render
-        player.draw(&mut curr_frame);
+        let drawables: Vec<&dyn Drawable> = vec![&player, &invaders];
+
+        for drawable in drawables {
+            drawable.draw(&mut curr_frame);
+        }
+
         let _ = render_tx.send(curr_frame);
         thread::sleep(Duration::from_millis(1));
     }
